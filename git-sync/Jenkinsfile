@@ -36,7 +36,9 @@ pipeline {
       steps {
         script {
           sh """
-          wget https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-arm64 -O ~/.docker/cli-plugins/docker-buildx
+          mkdir -p ~/.docker/cli-plugins
+          wget https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-arm64
+          mv buildx-v0.8.2.linux-arm64 ~/.docker/cli-plugins/docker-buildx
           chmod +x ~/.docker/cli-plugins/docker-buildx
           
           make container REGISTRY=registry VERSION=${BRANCH_NAME}
