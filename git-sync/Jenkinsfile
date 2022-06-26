@@ -36,11 +36,16 @@ pipeline {
       steps {
         script {
           sh """
+          # Install Dependencies
+          apk add make
+          
+          # Download Docker Plugins
           mkdir -p ~/.docker/cli-plugins
           wget https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-arm64
           mv buildx-v0.8.2.linux-arm64 ~/.docker/cli-plugins/docker-buildx
           chmod +x ~/.docker/cli-plugins/docker-buildx
           
+          # Build Image
           make container REGISTRY=registry VERSION=${BRANCH_NAME}
           """
         }
