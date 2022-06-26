@@ -1,1 +1,51 @@
-pipeline {}
+pipeline {
+  agent {
+    kubernetes {
+      idleMinutes 5
+      defaultContainer "docker"
+      yaml """
+      apiVersion: "v1"
+      kind: "Pod"
+      spec:
+        containers:  # list of containers that you want present for your build, you can define a default container in the Jenkinsfile
+          - name: jnlp
+            image: jenkins/inbound-agent:latest
+            tty: true
+            imagePullPolicy: "Always"
+          - name: "docker"
+            image: "docker:git"
+            command: ["tail", "-f", "/dev/null"]
+            imagePullPolicy: "IfNotPresent"
+            tty: true
+            volumeMounts:
+              - name: "docker"
+                mountPath: "/var/run/docker.sock" # We use the k8s host 
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - arm64
+        priorityClassName: system-cluster-critical
+    """
+    }
+  }
+  
+  stages {
+    stage('Build Image') {
+      steps {
+        script {
+          sh """
+          curl -sSL https://github.com/docker/buildx/releases/download/v0.8.2/buildx-v0.8.2.linux-arm64 -o ~/.docker/cli-plugins/docker-buildx
+          chmod +x ~/.docker/cli-plugins/docker-buildx
+          
+          make container REGISTRY=registry VERSION=${BRANCH_NAME}
+          """
+        }
+      }
+    }
+  }
+}
